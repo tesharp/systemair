@@ -424,6 +424,14 @@ parameters_list = [
         boolean=True,
     ),
     ModbusParameter(
+        register=14381,
+        sig=IntegerType.INT,
+        regType=RegisterType.Input,
+        short="REG_OUTPUT_TRIAC",
+        description="TRIAC control signal",
+        boolean=True,
+    ),
+    ModbusParameter(
         register=14101,
         sig=IntegerType.INT,
         regType=RegisterType.Input,
@@ -532,6 +540,15 @@ parameters_list = [
         description="PDM RHS sensor value (standard)",
         min=0,
         max=100,
+    ),
+    # Output values
+    ModbusParameter(
+        register=14104,
+        sig=IntegerType.UINT,
+        regType=RegisterType.Input,
+        short="REG_OUTPUT_Y2_DIGITAL",
+        description="Heat Exchanger DO state.0: Output not active1: Output active",
+        boolean=True,
     ),
     # Alarms
     ModbusParameter(

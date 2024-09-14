@@ -50,6 +50,14 @@ VALUE_TO_PRESET_MODE_MAP = {
     value: key for key, value in PRESET_MODE_TO_VALUE_MAP.items()
 }
 
+FAN_MODE_TO_VALUE_MAP = {
+    FAN_LOW: 2,
+    FAN_MEDIUM: 3,
+    FAN_HIGH: 4,
+}
+
+VALUE_TO_FAN_MODE_MAP = {value: key for key, value in FAN_MODE_TO_VALUE_MAP.items()}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -196,14 +204,19 @@ class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntit
     @property
     def fan_mode(self) -> str:
         """Return the current fan mode."""
-        return FAN_LOW
+        mode = self.coordinator.get_modbus_data(
+            parameter_map["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"]
+        )
+        return VALUE_TO_FAN_MODE_MAP.get(mode, FAN_LOW)
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan mode."""
-        return
-        # try:
-        #     await self.device.set_fan_speed(fan_mode)
-        # except (asyncio.exceptions.TimeoutError, ConnectionError, DecodingError) as exc:
-        #     raise HomeAssistantError from exc
-        # finally:
-        #     await self.coordinator.async_refresh()
+        mode = FAN_MODE_TO_VALUE_MAP[fan_mode]
+        try:
+            await self.coordinator.set_modbus_data(
+                parameter_map["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"], mode
+            )
+        except (asyncio.exceptions.TimeoutError, ConnectionError) as exc:
+            raise HomeAssistantError from exc
+        finally:
+            await self.coordinator.async_refresh()

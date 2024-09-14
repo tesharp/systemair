@@ -39,7 +39,7 @@ class SystemairSaveConnectDataUpdateCoordinator(DataUpdateCoordinator):
             hass=hass,
             logger=LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=20),
+            update_interval=timedelta(seconds=10),
         )
         self.modbus_parameters = []
 

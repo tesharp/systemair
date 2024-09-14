@@ -1,6 +1,7 @@
-"""Binary sensor platform for integration_blueprint."""
+"""Binary sensor platform for Systemair SAVE Connect 2.0."""
 
 from __future__ import annotations
+from dataclasses import dataclass
 
 from typing import TYPE_CHECKING
 
@@ -11,6 +12,7 @@ from homeassistant.components.binary_sensor import (
 )
 
 from .entity import SystemairSaveConnectEntity
+from .modbus import ModbusParameter, parameter_map
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -19,11 +21,26 @@ if TYPE_CHECKING:
     from .coordinator import SystemairSaveConnectDataUpdateCoordinator
     from .data import SystemairSaveConnectConfigEntry
 
+
+@dataclass(kw_only=True, frozen=True)
+class SystemairSaveConnectBinarySensorEntityDescription(BinarySensorEntityDescription):
+    """Describes a Systemair binary sensor entity."""
+
+    registry: ModbusParameter
+
+
 ENTITY_DESCRIPTIONS = (
-    BinarySensorEntityDescription(
-        key="integration_blueprint",
-        name="Integration Blueprint Binary Sensor",
-        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+    SystemairSaveConnectBinarySensorEntityDescription(
+        key="heat_exchange_active",
+        name="Heat Exchange Active",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        registry=parameter_map["REG_OUTPUT_Y2_DIGITAL"],
+    ),
+    SystemairSaveConnectBinarySensorEntityDescription(
+        key="heater_active",
+        name="Heater Active",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        registry=parameter_map["REG_OUTPUT_TRIAC"],
     ),
 )
 
@@ -44,18 +61,21 @@ async def async_setup_entry(
 
 
 class SystemairSaveConnectBinarySensor(SystemairSaveConnectEntity, BinarySensorEntity):
-    """integration_blueprint binary_sensor class."""
+    """Systemair SAVE Connect 2.0 binary_sensor class."""
+
+    entity_description: SystemairSaveConnectBinarySensorEntityDescription
 
     def __init__(
         self,
         coordinator: SystemairSaveConnectDataUpdateCoordinator,
-        entity_description: BinarySensorEntityDescription,
+        entity_description: SystemairSaveConnectBinarySensorEntityDescription,
     ) -> None:
         """Initialize the binary_sensor class."""
         super().__init__(coordinator)
         self.entity_description = entity_description
+        self._attr_unique_id = f"{coordinator.config_entry.runtime_data.serial_number}-{entity_description.key}"
 
     @property
     def is_on(self) -> bool:
         """Return true if the binary_sensor is on."""
-        return self.coordinator.data.get("title", "") == "foo"
+        return self.coordinator.get_modbus_data(self.entity_description.registry) != 0
