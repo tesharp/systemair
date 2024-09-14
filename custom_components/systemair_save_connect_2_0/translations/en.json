@@ -1,0 +1,69 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "If you need help with the configuration have a look here: https://github.com/tesharp/systemair_save_connect",
+                "data": {
+                    "address": "Address"
+                }
+            }
+        },
+        "error": {
+            "auth": "Username/Password is wrong.",
+            "connection": "Unable to connect to the server.",
+            "unknown": "Unknown error occurred."
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "air_filter_polluted": {
+                "name": "Air filter polluted"
+            }
+        },
+        "climate": {
+            "saveconnect": {
+                "name": "Ventilation",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "manual": "Manual",
+                            "crowded": "Crowded",
+                            "refresh": "Refresh",
+                            "fireplace": "Fireplace",
+                            "away": "Away",
+                            "holiday": "Holiday"
+                        }
+                    }
+                }
+            }
+        },
+        "number": {
+            "time_delay_holiday": {
+                "name": "Time delay holiday"
+            }
+        },
+        "sensor": {
+            "outside_air_temperature": {
+                "name": "Outside air temperature"
+            },
+            "extract_air_temperature": {
+                "name": "Extract air temperature"
+            },
+            "overheat_temperature": {
+                "name": "Overheat Temperature sensor"
+            },
+            "meter_saf_rpm": {
+                "name": "Supply Air Fan RPM"
+            },
+            "meter_saf_reg_speed": {
+                "name": "SAF fan speed"
+            },
+            "meter_eaf_rpm": {
+                "name": "Extract Air Fan RPM"
+            },
+            "meter_eaf_reg_speed": {
+                "name": "EAF fan speed"
+            }
+        }
+    }
+}

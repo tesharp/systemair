@@ -1,0 +1,12 @@
+{
+  "domain": "systemair_save_connect_2_0",
+  "name": "Systemair SAVE Connect 2.0",
+  "codeowners": [
+    "@tesharp"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/tesharp/systemair_save_connect",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/tesharp/systemair_save_connect/issues",
+  "version": "0.0.0"
+}

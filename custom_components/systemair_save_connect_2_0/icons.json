@@ -1,0 +1,18 @@
+{
+    "climate": {
+        "saveconnect": {
+            "state_attributes": {
+                "preset_mode": {
+                    "default": "mdi:tune-variant",
+                    "state": {
+                        "crowded": "mdi:account-multiple",
+                        "refresh": "mdi:fan-plus",
+                        "fireplace": "mdi:fireplace",
+                        "away": "mdi:exit-run",
+                        "holiday": "mdi:bag-suitcase"
+                    }
+                }
+            }
+        }
+    }
+}
