@@ -1,4 +1,4 @@
-"""Adds config flow for Systemair SAVE Connect 2.0."""
+"""Adds config flow for Systemair."""
 
 from __future__ import annotations
 
@@ -9,16 +9,15 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import (
-    SystemairSaveConnectApiClient,
-    SystemairSaveConnectApiClientAuthenticationError,
-    SystemairSaveConnectApiClientCommunicationError,
-    SystemairSaveConnectApiClientError,
+    SystemairApiClient,
+    SystemairApiClientCommunicationError,
+    SystemairApiClientError,
 )
 from .const import DOMAIN, LOGGER
 
 
-class SystemairSaveConnectFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Config flow for Systemair SAVE Connect 2.0."""
+class SystemairFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow for Systemair."""
 
     VERSION = 1
 
@@ -33,13 +32,10 @@ class SystemairSaveConnectFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 await self._test_connection(
                     address=user_input[CONF_IP_ADDRESS],
                 )
-            except SystemairSaveConnectApiClientAuthenticationError as exception:
-                LOGGER.warning(exception)
-                _errors["base"] = "auth"
-            except SystemairSaveConnectApiClientCommunicationError as exception:
+            except SystemairApiClientCommunicationError as exception:
                 LOGGER.error(exception)
                 _errors["base"] = "connection"
-            except SystemairSaveConnectApiClientError as exception:
+            except SystemairApiClientError as exception:
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
             else:
@@ -64,7 +60,7 @@ class SystemairSaveConnectFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _test_connection(self, address: str) -> None:
         """Validate credentials."""
-        client = SystemairSaveConnectApiClient(
+        client = SystemairApiClient(
             address=address,
             session=async_create_clientsession(self.hass),
         )

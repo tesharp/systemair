@@ -1,33 +1,39 @@
-"""DataUpdateCoordinator for Systemair SAVE Connect 2.0."""
+"""DataUpdateCoordinator for Systemair."""
 
 from __future__ import annotations
 
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import (
-    SystemairSaveConnectApiClientAuthenticationError,
-    SystemairSaveConnectApiClientError,
+    SystemairApiClientError,
 )
-
 from .const import DOMAIN, LOGGER
 from .modbus import IntegerType
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
-    from .data import SystemairSaveConnectConfigEntry
+    from .data import SystemairConfigEntry
     from .modbus import ModbusParameter
 
 
+class InvalidBooleanValueError(HomeAssistantError):
+    """Exception raised for invalid boolean values."""
+
+    def __init__(self) -> None:
+        """Initialize."""
+        super().__init__("Value must be a boolean")
+
+
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class SystemairSaveConnectDataUpdateCoordinator(DataUpdateCoordinator):
+class SystemairDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
-    config_entry: SystemairSaveConnectConfigEntry
+    config_entry: SystemairConfigEntry
     modbus_parameters: list[ModbusParameter]
 
     def __init__(
@@ -59,39 +65,31 @@ class SystemairSaveConnectDataUpdateCoordinator(DataUpdateCoordinator):
         value = int(value)
         if register.sig == IntegerType.INT and value > (1 << 15):
             value = -(65536 - value)
-        return value / (register.scaleFactor or 1)
+        return value / (register.scale_factor or 1)
 
     async def set_modbus_data(self, register: ModbusParameter, value: Any) -> None:
         """Set the data for a Modbus register."""
         if register.boolean:
             if not isinstance(value, bool):
-                raise ValueError("Value must be a boolean")
+                raise InvalidBooleanValueError
             value = 1 if value else 0
-            return await self.config_entry.runtime_data.client.async_set_data(
-                register, value
-            )
+            return await self.config_entry.runtime_data.client.async_set_data(register, value)
 
         value = int(value)
-        value = value * (register.scaleFactor or 1)
-        if register.min is not None and value < register.min:
-            value = register.min
-        if register.max is not None and value > register.max:
-            value = register.max
+        value = value * (register.scale_factor or 1)
+        if register.min_value is not None and value < register.min_value:
+            value = register.min_value
+        if register.max_value is not None and value > register.max_value:
+            value = register.max_value
 
-        return await self.config_entry.runtime_data.client.async_set_data(
-            register, value
-        )
+        return await self.config_entry.runtime_data.client.async_set_data(register, value)
 
     async def _async_setup(self) -> None:
         """Set up the coordinator."""
         menu = await self.config_entry.runtime_data.client.async_get_endpoint("menu")
-        unit_version = await self.config_entry.runtime_data.client.async_get_endpoint(
-            "unit_version"
-        )
+        unit_version = await self.config_entry.runtime_data.client.async_get_endpoint("unit_version")
         self.config_entry.runtime_data.mac_address = menu["mac"]
-        self.config_entry.runtime_data.serial_number = unit_version[
-            "System Serial Number"
-        ]
+        self.config_entry.runtime_data.serial_number = unit_version["System Serial Number"]
         self.config_entry.runtime_data.mb_hw_version = unit_version["MB HW version"]
         self.config_entry.runtime_data.mb_model = unit_version["MB Model"]
         self.config_entry.runtime_data.mb_sw_version = unit_version["MB SW version"]
@@ -100,10 +98,6 @@ class SystemairSaveConnectDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> Any:
         """Update data via library."""
         try:
-            return await self.config_entry.runtime_data.client.async_get_data(
-                self.modbus_parameters
-            )
-        except SystemairSaveConnectApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except SystemairSaveConnectApiClientError as exception:
+            return await self.config_entry.runtime_data.client.async_get_data(self.modbus_parameters)
+        except SystemairApiClientError as exception:
             raise UpdateFailed(exception) from exception

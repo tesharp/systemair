@@ -1,5 +1,5 @@
 {
-    "name": "tesharp/systemair_save_connect_2_0",
+    "name": "tesharp/systemair",
     "image": "mcr.microsoft.com/devcontainers/python:3.12",
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [

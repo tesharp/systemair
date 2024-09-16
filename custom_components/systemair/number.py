@@ -1,10 +1,7 @@
-"""The Systemair SAVE Connect 2.0 integration."""
+"""The Systemair integration."""
 
 import asyncio.exceptions
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-
-from typing import TYPE_CHECKING
 
 from homeassistant.components.number import (
     NumberDeviceClass,
@@ -12,28 +9,26 @@ from homeassistant.components.number import (
     NumberEntityDescription,
     NumberMode,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTime, EntityCategory
+from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
-from .entity import SystemairSaveConnectEntity
+from .coordinator import SystemairDataUpdateCoordinator
+from .data import SystemairConfigEntry
+from .entity import SystemairEntity
 from .modbus import ModbusParameter, parameter_map
-from .data import SystemairSaveConnectConfigEntry
-from .coordinator import SystemairSaveConnectDataUpdateCoordinator
 
 
 @dataclass(kw_only=True, frozen=True)
-class SystemairSaveConnectNumberEntityDescription(NumberEntityDescription):
+class SystemairNumberEntityDescription(NumberEntityDescription):
     """Describes a Systemair number entity."""
 
     registry: ModbusParameter
 
 
-NUMBERS: tuple[SystemairSaveConnectNumberEntityDescription, ...] = (
-    SystemairSaveConnectNumberEntityDescription(
+NUMBERS: tuple[SystemairNumberEntityDescription, ...] = (
+    SystemairNumberEntityDescription(
         key="time_delay_holiday",
         name="Holiday: Time delay",
         entity_category=EntityCategory.CONFIG,
@@ -43,7 +38,7 @@ NUMBERS: tuple[SystemairSaveConnectNumberEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfTime.DAYS,
         registry=parameter_map["REG_USERMODE_HOLIDAY_TIME"],
     ),
-    SystemairSaveConnectNumberEntityDescription(
+    SystemairNumberEntityDescription(
         key="time_delay_away",
         name="Away: Time delay",
         entity_category=EntityCategory.CONFIG,
@@ -53,7 +48,7 @@ NUMBERS: tuple[SystemairSaveConnectNumberEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfTime.HOURS,
         registry=parameter_map["REG_USERMODE_AWAY_TIME"],
     ),
-    SystemairSaveConnectNumberEntityDescription(
+    SystemairNumberEntityDescription(
         key="time_delay_fireplace",
         name="Fireplace: Time delay",
         entity_category=EntityCategory.CONFIG,
@@ -63,7 +58,7 @@ NUMBERS: tuple[SystemairSaveConnectNumberEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfTime.MINUTES,
         registry=parameter_map["REG_USERMODE_FIREPLACE_TIME"],
     ),
-    SystemairSaveConnectNumberEntityDescription(
+    SystemairNumberEntityDescription(
         key="time_delay_refresh",
         name="Refresh: Time delay",
         entity_category=EntityCategory.CONFIG,
@@ -73,7 +68,7 @@ NUMBERS: tuple[SystemairSaveConnectNumberEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfTime.MINUTES,
         registry=parameter_map["REG_USERMODE_REFRESH_TIME"],
     ),
-    SystemairSaveConnectNumberEntityDescription(
+    SystemairNumberEntityDescription(
         key="time_delay_crowded",
         name="Crowded: Time delay",
         entity_category=EntityCategory.CONFIG,
@@ -87,13 +82,13 @@ NUMBERS: tuple[SystemairSaveConnectNumberEntityDescription, ...] = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: SystemairSaveConnectConfigEntry,
+    _hass: HomeAssistant,
+    entry: SystemairConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up number from a config entry."""
     async_add_entities(
-        SystemairSaveConnectNumber(
+        SystemairNumber(
             coordinator=entry.runtime_data.coordinator,
             entity_description=entity_description,
         )
@@ -101,23 +96,23 @@ async def async_setup_entry(
     )
 
 
-class SystemairSaveConnectNumber(SystemairSaveConnectEntity, NumberEntity):
-    """Representation of a SAVE Connect 2.0 Number."""
+class SystemairNumber(SystemairEntity, NumberEntity):
+    """Representation of a Systemair Number."""
 
-    entity_description: SystemairSaveConnectNumberEntityDescription
+    entity_description: SystemairNumberEntityDescription
 
     def __init__(
         self,
-        coordinator: SystemairSaveConnectDataUpdateCoordinator,
-        entity_description: SystemairSaveConnectNumberEntityDescription,
+        coordinator: SystemairDataUpdateCoordinator,
+        entity_description: SystemairNumberEntityDescription,
     ) -> None:
         """Initialize the number class."""
         super().__init__(coordinator)
 
         self.entity_description = entity_description
         self._attr_unique_id = f"{coordinator.config_entry.runtime_data.serial_number}-{entity_description.key}"
-        self.native_min_value = float(entity_description.registry.min or 0)
-        self.native_max_value = float(entity_description.registry.max or 100)
+        self.native_min_value = float(entity_description.registry.min_value or 0)
+        self.native_max_value = float(entity_description.registry.max_value or 100)
 
     @property
     def native_value(self) -> float:
@@ -127,9 +122,7 @@ class SystemairSaveConnectNumber(SystemairSaveConnectEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         try:
-            await self.coordinator.set_modbus_data(
-                self.entity_description.registry, value
-            )
+            await self.coordinator.set_modbus_data(self.entity_description.registry, value)
         except (asyncio.exceptions.TimeoutError, ConnectionError) as exc:
             raise HomeAssistantError from exc
         finally:

@@ -1,5 +1,5 @@
 {
-    "name": "Systemair SAVE Connect 2.0",
+    "name": "Systemair",
     "hide_default_branch": true,
     "homeassistant": "2024.8.0",
     "render_readme": true

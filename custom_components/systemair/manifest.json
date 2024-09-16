@@ -1,0 +1,12 @@
+{
+  "domain": "systemair",
+  "name": "Systemair",
+  "codeowners": [
+    "@tesharp"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/tesharp/systemair",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/tesharp/systemair/issues",
+  "version": "0.1.0"
+}

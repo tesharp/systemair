@@ -1,32 +1,32 @@
-"""Switch platform for integration_blueprint."""
+"""Switch platform for Systemair."""
 
 from __future__ import annotations
-from dataclasses import dataclass
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 
+from .entity import SystemairEntity
 from .modbus import ModbusParameter, parameter_map
-from .entity import SystemairSaveConnectEntity
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from .coordinator import SystemairSaveConnectDataUpdateCoordinator
-    from .data import SystemairSaveConnectConfigEntry
+    from .coordinator import SystemairDataUpdateCoordinator
+    from .data import SystemairConfigEntry
 
 
 @dataclass(kw_only=True, frozen=True)
-class SystemairSaveConnectSwitchEntityDescription(SwitchEntityDescription):
+class SystemairSwitchEntityDescription(SwitchEntityDescription):
     """Describes a Systemair sensor entity."""
 
     registry: ModbusParameter
 
 
 ENTITY_DESCRIPTIONS = (
-    SystemairSaveConnectSwitchEntityDescription(
+    SystemairSwitchEntityDescription(
         key="eco_mode",
         name="ECO Mode",
         icon="mdi:leaf",
@@ -37,12 +37,12 @@ ENTITY_DESCRIPTIONS = (
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001 Unused function argument: `hass`
-    entry: SystemairSaveConnectConfigEntry,
+    entry: SystemairConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the switch platform."""
     async_add_entities(
-        SystemairSaveConnectSwitch(
+        SystemairSwitch(
             coordinator=entry.runtime_data.coordinator,
             entity_description=entity_description,
         )
@@ -50,15 +50,15 @@ async def async_setup_entry(
     )
 
 
-class SystemairSaveConnectSwitch(SystemairSaveConnectEntity, SwitchEntity):
-    """Systemair SAVE Connect 2.0 switch class."""
+class SystemairSwitch(SystemairEntity, SwitchEntity):
+    """Systemair switch class."""
 
-    entity_description: SystemairSaveConnectSwitchEntityDescription
+    entity_description: SystemairSwitchEntityDescription
 
     def __init__(
         self,
-        coordinator: SystemairSaveConnectDataUpdateCoordinator,
-        entity_description: SystemairSaveConnectSwitchEntityDescription,
+        coordinator: SystemairDataUpdateCoordinator,
+        entity_description: SystemairSwitchEntityDescription,
     ) -> None:
         """Initialize the switch class."""
         super().__init__(coordinator)
@@ -72,14 +72,10 @@ class SystemairSaveConnectSwitch(SystemairSaveConnectEntity, SwitchEntity):
 
     async def async_turn_on(self, **_: Any) -> None:
         """Turn on the switch."""
-        await self.coordinator.set_modbus_data(
-            self.entity_description.registry, value=True
-        )
+        await self.coordinator.set_modbus_data(self.entity_description.registry, value=True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_: Any) -> None:
         """Turn off the switch."""
-        await self.coordinator.set_modbus_data(
-            self.entity_description.registry, value=False
-        )
+        await self.coordinator.set_modbus_data(self.entity_description.registry, value=False)
         await self.coordinator.async_request_refresh()

@@ -1,8 +1,8 @@
-"""Sensor platform for Systemair SAVE Connect 2.0."""
+"""Sensor platform for Systemair0."""
 
 from __future__ import annotations
-from dataclasses import dataclass
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import (
@@ -10,77 +10,74 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.components.sensor.const import SensorDeviceClass, SensorStateClass
-
 from homeassistant.const import (
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
-    UnitOfPower,
     UnitOfTemperature,
-    UnitOfTime,
 )
 
+from .entity import SystemairEntity
 from .modbus import ModbusParameter, parameter_map
-from .entity import SystemairSaveConnectEntity
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from .coordinator import SystemairSaveConnectDataUpdateCoordinator
-    from .data import SystemairSaveConnectConfigEntry
+    from .coordinator import SystemairDataUpdateCoordinator
+    from .data import SystemairConfigEntry
 
 
 @dataclass(kw_only=True, frozen=True)
-class SystemairSaveConnectSensorEntityDescription(SensorEntityDescription):
+class SystemairSensorEntityDescription(SensorEntityDescription):
     """Describes a Systemair sensor entity."""
 
     registry: ModbusParameter
 
 
 ENTITY_DESCRIPTIONS = (
-    SystemairSaveConnectSensorEntityDescription(
+    SystemairSensorEntityDescription(
         key="outside_air_temperature",
         name="Outside air temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         registry=parameter_map["REG_SENSOR_OAT"],
     ),
-    SystemairSaveConnectSensorEntityDescription(
+    SystemairSensorEntityDescription(
         key="extract_air_temperature",
         name="Extract air temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         registry=parameter_map["REG_SENSOR_PDM_EAT_VALUE"],
     ),
-    SystemairSaveConnectSensorEntityDescription(
+    SystemairSensorEntityDescription(
         key="overheat_temperature",
         name="Overheat temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         registry=parameter_map["REG_SENSOR_OHT"],
     ),
-    SystemairSaveConnectSensorEntityDescription(
+    SystemairSensorEntityDescription(
         key="meter_saf_rpm",
         name="Supply air fan rpm",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         registry=parameter_map["REG_SENSOR_RPM_SAF"],
     ),
-    SystemairSaveConnectSensorEntityDescription(
+    SystemairSensorEntityDescription(
         key="meter_saf_reg_speed",
         name="Supply air fan speed",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         registry=parameter_map["REG_OUTPUT_SAF"],
     ),
-    SystemairSaveConnectSensorEntityDescription(
+    SystemairSensorEntityDescription(
         key="meter_eaf_rpm",
         name="Extract air fan rpm",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
         registry=parameter_map["REG_SENSOR_RPM_EAF"],
     ),
-    SystemairSaveConnectSensorEntityDescription(
+    SystemairSensorEntityDescription(
         key="meter_eaf_reg_speed",
         name="Extract air fan speed",
         state_class=SensorStateClass.MEASUREMENT,
@@ -92,12 +89,12 @@ ENTITY_DESCRIPTIONS = (
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001 Unused function argument: `hass`
-    entry: SystemairSaveConnectConfigEntry,
+    entry: SystemairConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
     async_add_entities(
-        SystemairSaveConnectSensor(
+        SystemairSensor(
             coordinator=entry.runtime_data.coordinator,
             entity_description=entity_description,
         )
@@ -105,15 +102,15 @@ async def async_setup_entry(
     )
 
 
-class SystemairSaveConnectSensor(SystemairSaveConnectEntity, SensorEntity):
-    """Systemair SAVE Connect 2.0 Sensor class."""
+class SystemairSensor(SystemairEntity, SensorEntity):
+    """Systemair Sensor class."""
 
-    entity_description: SystemairSaveConnectSensorEntityDescription
+    entity_description: SystemairSensorEntityDescription
 
     def __init__(
         self,
-        coordinator: SystemairSaveConnectDataUpdateCoordinator,
-        entity_description: SystemairSaveConnectSensorEntityDescription,
+        coordinator: SystemairDataUpdateCoordinator,
+        entity_description: SystemairSensorEntityDescription,
     ) -> None:
         """Initialize the sensor class."""
         super().__init__(coordinator)

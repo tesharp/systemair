@@ -24,6 +24,6 @@ jobs:
           zip systemair_save_connect_2_0.zip -r ./
 
       - name: "Upload the ZIP file to the release"
-        uses: "softprops/action-gh-release@v2.0.6"
+        uses: "softprops/action-gh-release@v2"
         with:
           files: ${{ github.workspace }}/custom_components/systemair_save_connect_2_0/systemair_save_connect_2_0.zip

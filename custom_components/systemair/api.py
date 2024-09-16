@@ -1,66 +1,48 @@
-"""Sample API Client."""
+"""Systemair Client."""
 
 from __future__ import annotations
 
 import socket
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import async_timeout
 
 from .const import LOGGER
-from .modbus import ModbusParameter
+
+if TYPE_CHECKING:
+    from .modbus import ModbusParameter
 
 
-class SystemairSaveConnectApiClientError(Exception):
+class SystemairApiClientError(Exception):
     """Exception to indicate a general API error."""
 
 
-class SystemairSaveConnectApiClientCommunicationError(
-    SystemairSaveConnectApiClientError,
+class SystemairApiClientCommunicationError(
+    SystemairApiClientError,
 ):
     """Exception to indicate a communication error."""
 
 
-class SystemairSaveConnectApiClientAuthenticationError(
-    SystemairSaveConnectApiClientError,
-):
-    """Exception to indicate an authentication error."""
-
-
-def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
-    """Verify that the response is valid."""
-    if response.status in (401, 403):
-        msg = "Invalid credentials"
-        raise SystemairSaveConnectApiClientAuthenticationError(
-            msg,
-        )
-    response.raise_for_status()
-
-
-class SystemairSaveConnectApiClient:
-    """Sample API Client."""
+class SystemairApiClient:
+    """Systemair API Client."""
 
     def __init__(
         self,
         address: str,
         session: aiohttp.ClientSession,
     ) -> None:
-        """Sample API Client."""
+        """Systemair API Client."""
         self._address = address
         self._session = session
 
     async def async_test_connection(self) -> Any:
         """Test connection to API."""
-        return await self._api_wrapper(
-            method="get", url=f"http://{self._address}/mread?{{}}"
-        )
+        return await self._api_wrapper(method="get", url=f"http://{self._address}/mread?{{}}")
 
     async def async_get_endpoint(self, endpoint: str) -> Any:
         """Get information from the API."""
-        return await self._api_wrapper(
-            method="get", url=f"http://{self._address}/{endpoint}"
-        )
+        return await self._api_wrapper(method="get", url=f"http://{self._address}/{endpoint}")
 
     async def async_get_data(self, reg: list[ModbusParameter]) -> Any:
         """Read modbus registers."""
@@ -74,7 +56,6 @@ class SystemairSaveConnectApiClient:
         query_params = f"%22{registry.register - 1}%22:{value}"
         url = f"http://{self._address}/mwrite?{{{query_params}}}"
         LOGGER.debug("URL: %s", url)
-        # return None
         return await self._api_wrapper(method="get", url=url)
 
     async def _api_wrapper(
@@ -94,7 +75,6 @@ class SystemairSaveConnectApiClient:
                         headers=headers,
                         json=data,
                     )
-                    _verify_response_or_raise(response)
                     response_body = await response.text()
                     if "MB DISCONNECTED" in response_body:
                         LOGGER.warning("Received 'MB DISCONNECTED', retrying...")
@@ -105,16 +85,16 @@ class SystemairSaveConnectApiClient:
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"
-            raise SystemairSaveConnectApiClientCommunicationError(
+            raise SystemairApiClientCommunicationError(
                 msg,
             ) from exception
         except (aiohttp.ClientError, socket.gaierror) as exception:
             msg = f"Error fetching information - {exception}"
-            raise SystemairSaveConnectApiClientCommunicationError(
+            raise SystemairApiClientCommunicationError(
                 msg,
             ) from exception
         except Exception as exception:  # pylint: disable=broad-except
             msg = f"Something really wrong happened! - {exception}"
-            raise SystemairSaveConnectApiClientError(
+            raise SystemairApiClientError(
                 msg,
             ) from exception

@@ -1,8 +1,7 @@
-"""Custom types for Systemair SAVE Connect 2.0."""
+"""Custom types for Systemair."""
 
 from __future__ import annotations
 
-from curses import noecho
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -10,19 +9,19 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.loader import Integration
 
-    from .api import SystemairSaveConnectApiClient
-    from .coordinator import SystemairSaveConnectDataUpdateCoordinator
+    from .api import SystemairApiClient
+    from .coordinator import SystemairDataUpdateCoordinator
 
 
-type SystemairSaveConnectConfigEntry = ConfigEntry[SystemairSaveConnectData]
+type SystemairConfigEntry = ConfigEntry[SystemairData]
 
 
 @dataclass
-class SystemairSaveConnectData:
-    """Data for the Systemair SAVE Connect 2.0."""
+class SystemairData:
+    """Data for the Systemair."""
 
-    client: SystemairSaveConnectApiClient
-    coordinator: SystemairSaveConnectDataUpdateCoordinator
+    client: SystemairApiClient
+    coordinator: SystemairDataUpdateCoordinator
     integration: Integration
 
     iam_sw_version: str | None = None

@@ -1,5 +1,5 @@
 """
-Custom integration to integrate Systemair SAVE Connect 2.0 with Home Assistant.
+Custom integration to integrate Systemair with Home Assistant.
 
 For more details about this integration, please refer to
 https://github.com/tesharp/systemair-save-connect
@@ -13,14 +13,14 @@ from homeassistant.const import CONF_IP_ADDRESS, Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_loaded_integration
 
-from .api import SystemairSaveConnectApiClient
-from .coordinator import SystemairSaveConnectDataUpdateCoordinator
-from .data import SystemairSaveConnectData
+from .api import SystemairApiClient
+from .coordinator import SystemairDataUpdateCoordinator
+from .data import SystemairData
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
-    from .data import SystemairSaveConnectConfigEntry
+    from .data import SystemairConfigEntry
 
 PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
@@ -34,14 +34,14 @@ PLATFORMS: list[Platform] = [
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: SystemairSaveConnectConfigEntry,
+    entry: SystemairConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    coordinator = SystemairSaveConnectDataUpdateCoordinator(
+    coordinator = SystemairDataUpdateCoordinator(
         hass=hass,
     )
-    entry.runtime_data = SystemairSaveConnectData(
-        client=SystemairSaveConnectApiClient(
+    entry.runtime_data = SystemairData(
+        client=SystemairApiClient(
             address=entry.data[CONF_IP_ADDRESS],
             session=async_get_clientsession(hass),
         ),
@@ -60,7 +60,7 @@ async def async_setup_entry(
 
 async def async_unload_entry(
     hass: HomeAssistant,
-    entry: SystemairSaveConnectConfigEntry,
+    entry: SystemairConfigEntry,
 ) -> bool:
     """Handle removal of an entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -68,7 +68,7 @@ async def async_unload_entry(
 
 async def async_reload_entry(
     hass: HomeAssistant,
-    entry: SystemairSaveConnectConfigEntry,
+    entry: SystemairConfigEntry,
 ) -> None:
     """Reload config entry."""
     await async_unload_entry(hass, entry)

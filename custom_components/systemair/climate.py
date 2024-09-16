@@ -1,4 +1,4 @@
-"""Systemair SAVE Connect 2.0 integration."""
+"""Systemair integration."""
 
 import asyncio.exceptions
 from typing import Any
@@ -7,12 +7,12 @@ from homeassistant.components.climate import (
     ClimateEntity,
 )
 from homeassistant.components.climate.const import (
+    FAN_HIGH,
+    FAN_LOW,
+    FAN_MEDIUM,
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
-    FAN_LOW,
-    FAN_MEDIUM,
-    FAN_HIGH,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_WHOLE, UnitOfTemperature
@@ -22,19 +22,17 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from httpx import DecodingError
 
 from .const import (
-    DOMAIN,
-    LOGGER,
     MAX_TEMP,
     MIN_TEMP,
-    PRESET_MODE_MANUAL,
-    PRESET_MODE_CROWDED,
-    PRESET_MODE_REFRESH,
-    PRESET_MODE_FIREPLACE,
     PRESET_MODE_AWAY,
+    PRESET_MODE_CROWDED,
+    PRESET_MODE_FIREPLACE,
     PRESET_MODE_HOLIDAY,
+    PRESET_MODE_MANUAL,
+    PRESET_MODE_REFRESH,
 )
-from .coordinator import SystemairSaveConnectDataUpdateCoordinator
-from .entity import SystemairSaveConnectEntity
+from .coordinator import SystemairDataUpdateCoordinator
+from .entity import SystemairEntity
 from .modbus import parameter_map
 
 PRESET_MODE_TO_VALUE_MAP = {
@@ -46,9 +44,7 @@ PRESET_MODE_TO_VALUE_MAP = {
     PRESET_MODE_HOLIDAY: 7,
 }
 
-VALUE_TO_PRESET_MODE_MAP = {
-    value: key for key, value in PRESET_MODE_TO_VALUE_MAP.items()
-}
+VALUE_TO_PRESET_MODE_MAP = {value: key for key, value in PRESET_MODE_TO_VALUE_MAP.items()}
 
 FAN_MODE_TO_VALUE_MAP = {
     FAN_LOW: 2,
@@ -60,18 +56,16 @@ VALUE_TO_FAN_MODE_MAP = {value: key for key, value in FAN_MODE_TO_VALUE_MAP.item
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Systemair Save Connect unit."""
-    async_add_entities(
-        [SystemairSaveConnectClimateEntity(config_entry.runtime_data.coordinator)]
-    )
+    """Set up the Systemair unit."""
+    async_add_entities([SystemairClimateEntity(config_entry.runtime_data.coordinator)])
 
 
-class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntity):
-    """Systemair Save Connect air handling unit."""
+class SystemairClimateEntity(SystemairEntity, ClimateEntity):
+    """Systemair air handling unit."""
 
     _attr_name = None
 
@@ -97,9 +91,7 @@ class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntit
     ]
 
     _attr_supported_features = (
-        ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TARGET_TEMPERATURE
-        | ClimateEntityFeature.FAN_MODE
+        ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
     )
 
     _attr_target_temperature_step = PRECISION_WHOLE
@@ -108,15 +100,11 @@ class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntit
     _attr_min_temp = MIN_TEMP
     _enable_turn_on_off_backwards_compatibility = False
 
-    def __init__(self, coordinator: SystemairSaveConnectDataUpdateCoordinator) -> None:
-        """Initialize the Systemair Save Connect unit."""
+    def __init__(self, coordinator: SystemairDataUpdateCoordinator) -> None:
+        """Initialize the Systemair unit."""
         super().__init__(coordinator)
         self._attr_unique_id = coordinator.config_entry.entry_id
         self.translation_key = "saveconnect"
-
-    # async def async_update(self) -> None:
-    #     """Refresh unit state."""
-    #     await self.device.update()
 
     @property
     def hvac_action(self) -> HVACAction | None:
@@ -148,9 +136,7 @@ class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntit
             return
 
         try:
-            await self.coordinator.set_modbus_data(
-                parameter_map["REG_TC_SP"], temperature
-            )
+            await self.coordinator.set_modbus_data(parameter_map["REG_TC_SP"], temperature)
         except (asyncio.exceptions.TimeoutError, ConnectionError, DecodingError) as exc:
             raise HomeAssistantError from exc
         finally:
@@ -158,12 +144,12 @@ class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntit
 
     @property
     def preset_mode(self) -> str:
-        """Return the current preset mode, e.g., manual, crowded, refresh, fireplace, away or holiday.
+        """
+        Return the current preset mode, e.g., manual, crowded, refresh, fireplace, away or holiday.
 
-        Requires ClimateEntityFeature.PRESET_MODE."""
-        mode = self.coordinator.get_modbus_data(
-            parameter_map["REG_USERMODE_HMI_CHANGE_REQUEST"]
-        )
+        Requires ClimateEntityFeature.PRESET_MODE.
+        """
+        mode = self.coordinator.get_modbus_data(parameter_map["REG_USERMODE_HMI_CHANGE_REQUEST"])
         return VALUE_TO_PRESET_MODE_MAP.get(mode, PRESET_MODE_MANUAL)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -171,9 +157,7 @@ class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntit
         ventilation_mode = PRESET_MODE_TO_VALUE_MAP[preset_mode]
 
         try:
-            await self.coordinator.set_modbus_data(
-                parameter_map["REG_USERMODE_HMI_CHANGE_REQUEST"], ventilation_mode
-            )
+            await self.coordinator.set_modbus_data(parameter_map["REG_USERMODE_HMI_CHANGE_REQUEST"], ventilation_mode)
         except (asyncio.exceptions.TimeoutError, ConnectionError, DecodingError) as exc:
             raise HomeAssistantError from exc
         finally:
@@ -204,18 +188,14 @@ class SystemairSaveConnectClimateEntity(SystemairSaveConnectEntity, ClimateEntit
     @property
     def fan_mode(self) -> str:
         """Return the current fan mode."""
-        mode = self.coordinator.get_modbus_data(
-            parameter_map["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"]
-        )
+        mode = self.coordinator.get_modbus_data(parameter_map["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"])
         return VALUE_TO_FAN_MODE_MAP.get(mode, FAN_LOW)
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan mode."""
         mode = FAN_MODE_TO_VALUE_MAP[fan_mode]
         try:
-            await self.coordinator.set_modbus_data(
-                parameter_map["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"], mode
-            )
+            await self.coordinator.set_modbus_data(parameter_map["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"], mode)
         except (asyncio.exceptions.TimeoutError, ConnectionError) as exc:
             raise HomeAssistantError from exc
         finally:

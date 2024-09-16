@@ -1,4 +1,4 @@
-# Systemair SAVE Connect 2.0
+# Systemair
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]

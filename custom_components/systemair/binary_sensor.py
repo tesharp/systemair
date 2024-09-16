@@ -1,8 +1,8 @@
-"""Binary sensor platform for Systemair SAVE Connect 2.0."""
+"""Binary sensor platform for Systemair."""
 
 from __future__ import annotations
-from dataclasses import dataclass
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from homeassistant.components.binary_sensor import (
@@ -11,32 +11,32 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 
-from .entity import SystemairSaveConnectEntity
+from .entity import SystemairEntity
 from .modbus import ModbusParameter, parameter_map
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from .coordinator import SystemairSaveConnectDataUpdateCoordinator
-    from .data import SystemairSaveConnectConfigEntry
+    from .coordinator import SystemairDataUpdateCoordinator
+    from .data import SystemairConfigEntry
 
 
 @dataclass(kw_only=True, frozen=True)
-class SystemairSaveConnectBinarySensorEntityDescription(BinarySensorEntityDescription):
+class SystemairBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes a Systemair binary sensor entity."""
 
     registry: ModbusParameter
 
 
 ENTITY_DESCRIPTIONS = (
-    SystemairSaveConnectBinarySensorEntityDescription(
+    SystemairBinarySensorEntityDescription(
         key="heat_exchange_active",
         name="Heat Exchange Active",
         device_class=BinarySensorDeviceClass.RUNNING,
         registry=parameter_map["REG_OUTPUT_Y2_DIGITAL"],
     ),
-    SystemairSaveConnectBinarySensorEntityDescription(
+    SystemairBinarySensorEntityDescription(
         key="heater_active",
         name="Heater Active",
         device_class=BinarySensorDeviceClass.RUNNING,
@@ -47,12 +47,12 @@ ENTITY_DESCRIPTIONS = (
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001 Unused function argument: `hass`
-    entry: SystemairSaveConnectConfigEntry,
+    entry: SystemairConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the binary_sensor platform."""
     async_add_entities(
-        SystemairSaveConnectBinarySensor(
+        SystemairBinarySensor(
             coordinator=entry.runtime_data.coordinator,
             entity_description=entity_description,
         )
@@ -60,15 +60,15 @@ async def async_setup_entry(
     )
 
 
-class SystemairSaveConnectBinarySensor(SystemairSaveConnectEntity, BinarySensorEntity):
-    """Systemair SAVE Connect 2.0 binary_sensor class."""
+class SystemairBinarySensor(SystemairEntity, BinarySensorEntity):
+    """Systemair binary_sensor class."""
 
-    entity_description: SystemairSaveConnectBinarySensorEntityDescription
+    entity_description: SystemairBinarySensorEntityDescription
 
     def __init__(
         self,
-        coordinator: SystemairSaveConnectDataUpdateCoordinator,
-        entity_description: SystemairSaveConnectBinarySensorEntityDescription,
+        coordinator: SystemairDataUpdateCoordinator,
+        entity_description: SystemairBinarySensorEntityDescription,
     ) -> None:
         """Initialize the binary_sensor class."""
         super().__init__(coordinator)

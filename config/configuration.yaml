@@ -9,4 +9,4 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.systemair_save_connect_2_0: debug
+    custom_components.systemair: debug
