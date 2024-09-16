@@ -67,9 +67,9 @@ async def async_setup_entry(
 class SystemairClimateEntity(SystemairEntity, ClimateEntity):
     """Systemair air handling unit."""
 
-    _attr_name = None
-
     from typing import ClassVar
+
+    _attr_has_entity_name = True
 
     _attr_hvac_modes: ClassVar[list[HVACMode]] = [
         HVACMode.FAN_ONLY,
@@ -103,8 +103,8 @@ class SystemairClimateEntity(SystemairEntity, ClimateEntity):
     def __init__(self, coordinator: SystemairDataUpdateCoordinator) -> None:
         """Initialize the Systemair unit."""
         super().__init__(coordinator)
-        self._attr_unique_id = coordinator.config_entry.entry_id
-        self.translation_key = "saveconnect"
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}-climate"
+        self._attr_translation_key = "saveconnect"
 
     @property
     def hvac_action(self) -> HVACAction | None:

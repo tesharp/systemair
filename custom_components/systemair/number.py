@@ -30,7 +30,7 @@ class SystemairNumberEntityDescription(NumberEntityDescription):
 NUMBERS: tuple[SystemairNumberEntityDescription, ...] = (
     SystemairNumberEntityDescription(
         key="time_delay_holiday",
-        name="Holiday: Time delay",
+        translation_key="time_delay_holiday",
         entity_category=EntityCategory.CONFIG,
         device_class=NumberDeviceClass.DURATION,
         native_step=1,
@@ -40,7 +40,7 @@ NUMBERS: tuple[SystemairNumberEntityDescription, ...] = (
     ),
     SystemairNumberEntityDescription(
         key="time_delay_away",
-        name="Away: Time delay",
+        translation_key="time_delay_away",
         entity_category=EntityCategory.CONFIG,
         device_class=NumberDeviceClass.DURATION,
         native_step=1,
@@ -50,7 +50,7 @@ NUMBERS: tuple[SystemairNumberEntityDescription, ...] = (
     ),
     SystemairNumberEntityDescription(
         key="time_delay_fireplace",
-        name="Fireplace: Time delay",
+        translation_key="time_delay_fireplace",
         entity_category=EntityCategory.CONFIG,
         device_class=NumberDeviceClass.DURATION,
         native_step=1,
@@ -60,7 +60,7 @@ NUMBERS: tuple[SystemairNumberEntityDescription, ...] = (
     ),
     SystemairNumberEntityDescription(
         key="time_delay_refresh",
-        name="Refresh: Time delay",
+        translation_key="time_delay_refresh",
         entity_category=EntityCategory.CONFIG,
         device_class=NumberDeviceClass.DURATION,
         native_step=1,
@@ -70,7 +70,7 @@ NUMBERS: tuple[SystemairNumberEntityDescription, ...] = (
     ),
     SystemairNumberEntityDescription(
         key="time_delay_crowded",
-        name="Crowded: Time delay",
+        translation_key="time_delay_crowded",
         entity_category=EntityCategory.CONFIG,
         device_class=NumberDeviceClass.DURATION,
         native_step=1,
@@ -99,6 +99,8 @@ async def async_setup_entry(
 class SystemairNumber(SystemairEntity, NumberEntity):
     """Representation of a Systemair Number."""
 
+    _attr_has_entity_name = True
+
     entity_description: SystemairNumberEntityDescription
 
     def __init__(
@@ -110,7 +112,7 @@ class SystemairNumber(SystemairEntity, NumberEntity):
         super().__init__(coordinator)
 
         self.entity_description = entity_description
-        self._attr_unique_id = f"{coordinator.config_entry.runtime_data.serial_number}-{entity_description.key}"
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}-{entity_description.key}"
         self.native_min_value = float(entity_description.registry.min_value or 0)
         self.native_max_value = float(entity_description.registry.max_value or 100)
 

@@ -2,27 +2,30 @@
     "config": {
         "step": {
             "user": {
-                "description": "If you need help with the configuration have a look here: https://github.com/tesharp/systemair_save_connect",
+                "description": "If you need help with the configuration have a look here: https://github.com/tesharp/systemair",
                 "data": {
-                    "address": "Address"
+                    "ip_address": "IP Address"
                 }
             }
         },
         "error": {
-            "auth": "Username/Password is wrong.",
             "connection": "Unable to connect to the server.",
-            "unknown": "Unknown error occurred."
+            "unknown": "Unknown error occurred.",
+            "already_configured": "This unit is already configured."
         }
     },
     "entity": {
         "binary_sensor": {
-            "air_filter_polluted": {
-                "name": "Air filter polluted"
+            "heat_exchange_active": {
+                "name": "Heat Exchange active"
+            },
+            "heater_active": {
+                "name": "Heater active"
             }
         },
         "climate": {
             "saveconnect": {
-                "name": "Ventilation",
+                "name": "Unit",
                 "state_attributes": {
                     "preset_mode": {
                         "state": {
@@ -39,7 +42,19 @@
         },
         "number": {
             "time_delay_holiday": {
-                "name": "Time delay holiday"
+                "name": "Holiday: Time delay"
+            },
+            "time_delay_away": {
+                "name": "Away: Time delay"
+            },
+            "time_delay_fireplace": {
+                "name": "Fireplace: Time delay"
+            },
+            "time_delay_refresh": {
+                "name": "Refresh: Time delay"
+            },
+            "time_delay_crowded": {
+                "name": "Crowded: Time delay"
             }
         },
         "sensor": {
@@ -63,6 +78,11 @@
             },
             "meter_eaf_reg_speed": {
                 "name": "EAF fan speed"
+            }
+        },
+        "switch": {
+            "eco_mode": {
+                "name": "Eco mode"
             }
         }
     }
