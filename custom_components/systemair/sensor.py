@@ -122,4 +122,4 @@ class SystemairSensor(SystemairEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the native value of the sensor."""
-        return self.coordinator.get_modbus_data(self.entity_description.registry)
+        return str(self.coordinator.get_modbus_data(self.entity_description.registry))

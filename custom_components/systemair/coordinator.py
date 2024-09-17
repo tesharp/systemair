@@ -12,7 +12,7 @@ from .api import (
     SystemairApiClientError,
 )
 from .const import DOMAIN, LOGGER
-from .modbus import IntegerType
+from .modbus import IntegerType, parameter_map
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -54,7 +54,7 @@ class SystemairDataUpdateCoordinator(DataUpdateCoordinator):
         if modbus_parameter not in self.modbus_parameters:
             self.modbus_parameters.append(modbus_parameter)
 
-    def get_modbus_data(self, register: ModbusParameter) -> Any:
+    def get_modbus_data(self, register: ModbusParameter) -> float:
         """Get the data for a Modbus register."""
         self.register_modbus_parameters(register)
         value = self.data.get(str(register.register - 1))
@@ -94,6 +94,11 @@ class SystemairDataUpdateCoordinator(DataUpdateCoordinator):
         self.config_entry.runtime_data.mb_model = unit_version["MB Model"]
         self.config_entry.runtime_data.mb_sw_version = unit_version["MB SW version"]
         self.config_entry.runtime_data.iam_sw_version = unit_version["IAM SW version"]
+
+        # Required for setup of climate entity
+        self.register_modbus_parameters(parameter_map["REG_FUNCTION_ACTIVE_HEATER"])
+        self.register_modbus_parameters(parameter_map["REG_FUNCTION_ACTIVE_COOLER"])
+        self.data = await self._async_update_data()
 
     async def _async_update_data(self) -> Any:
         """Update data via library."""

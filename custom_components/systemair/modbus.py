@@ -418,6 +418,15 @@ parameters_list = [
     ),
     # Cooler
     ModbusParameter(
+        register=3014,
+        sig=IntegerType.INT,
+        reg_type=RegisterType.Input,
+        short="REG_FUNCTION_ACTIVE_COOLER",
+        description="Which type of cooler is active (0=None, 1=Water, 2=Change over)",
+        min_value=0,
+        max_value=2,
+    ),
+    ModbusParameter(
         register=14201,
         sig=IntegerType.INT,
         reg_type=RegisterType.Input,
@@ -435,6 +444,15 @@ parameters_list = [
         boolean=True,
     ),
     # Heater
+    ModbusParameter(
+        register=3002,
+        sig=IntegerType.INT,
+        reg_type=RegisterType.Input,
+        short="REG_FUNCTION_ACTIVE_HEATER",
+        description="Which type of heater is active",
+        min_value=0,
+        max_value=3,
+    ),
     ModbusParameter(
         register=3113,
         sig=IntegerType.INT,

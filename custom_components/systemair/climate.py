@@ -3,6 +3,8 @@
 import asyncio.exceptions
 from typing import Any
 
+from .const import LOGGER
+
 from homeassistant.components.climate import (
     ClimateEntity,
 )
@@ -44,7 +46,7 @@ PRESET_MODE_TO_VALUE_MAP = {
     PRESET_MODE_HOLIDAY: 7,
 }
 
-VALUE_TO_PRESET_MODE_MAP = {value: key for key, value in PRESET_MODE_TO_VALUE_MAP.items()}
+VALUE_TO_PRESET_MODE_MAP = {value - 1: key for key, value in PRESET_MODE_TO_VALUE_MAP.items()}
 
 FAN_MODE_TO_VALUE_MAP = {
     FAN_LOW: 2,
@@ -70,10 +72,6 @@ class SystemairClimateEntity(SystemairEntity, ClimateEntity):
     from typing import ClassVar
 
     _attr_has_entity_name = True
-
-    _attr_hvac_modes: ClassVar[list[HVACMode]] = [
-        HVACMode.FAN_ONLY,
-    ]
 
     _attr_preset_modes: ClassVar[list[str]] = [
         PRESET_MODE_MANUAL,
@@ -106,14 +104,29 @@ class SystemairClimateEntity(SystemairEntity, ClimateEntity):
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}-climate"
         self._attr_translation_key = "saveconnect"
 
+        heater = self.coordinator.get_modbus_data(parameter_map["REG_FUNCTION_ACTIVE_HEATER"])
+        cooler = self.coordinator.get_modbus_data(parameter_map["REG_FUNCTION_ACTIVE_COOLER"])
+
+        self._attr_hvac_modes = [HVACMode.FAN_ONLY]
+        LOGGER.info("Heater: %s, Cooler: %s", heater, cooler)
+        if heater:
+            self._attr_hvac_modes.append(HVACMode.HEAT)
+
+        if cooler:
+            self._attr_hvac_modes.append(HVACMode.COOL)
+
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return current HVAC action."""
-        return HVACAction.FAN
+        heater = self.coordinator.get_modbus_data(parameter_map["REG_OUTPUT_TRIAC"])
+        cooler = self.coordinator.get_modbus_data(parameter_map["REG_OUTPUT_Y3_DIGITAL"])
 
-    #     if self.device.electric_heater:
-    #         return HVACAction.HEATING
-    #     return HVACAction.FAN
+        if heater:
+            return HVACAction.HEATING
+        if cooler:
+            return HVACAction.COOLING
+
+        return HVACAction.FAN
 
     @property
     def current_humidity(self) -> float | None:
@@ -149,8 +162,8 @@ class SystemairClimateEntity(SystemairEntity, ClimateEntity):
 
         Requires ClimateEntityFeature.PRESET_MODE.
         """
-        mode = self.coordinator.get_modbus_data(parameter_map["REG_USERMODE_HMI_CHANGE_REQUEST"])
-        return VALUE_TO_PRESET_MODE_MAP.get(mode, PRESET_MODE_MANUAL)
+        mode = self.coordinator.get_modbus_data(parameter_map["REG_USERMODE_MODE"])
+        return VALUE_TO_PRESET_MODE_MAP.get(int(mode), PRESET_MODE_MANUAL)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
@@ -161,35 +174,33 @@ class SystemairClimateEntity(SystemairEntity, ClimateEntity):
         except (asyncio.exceptions.TimeoutError, ConnectionError, DecodingError) as exc:
             raise HomeAssistantError from exc
         finally:
+            await asyncio.sleep(2)
             await self.coordinator.async_refresh()
 
     @property
     def hvac_mode(self) -> HVACMode:
         """Return hvac operation ie. heat, cool mode."""
+        heater = self.coordinator.get_modbus_data(parameter_map["REG_FUNCTION_ACTIVE_HEATER"])
+        cooler = self.coordinator.get_modbus_data(parameter_map["REG_FUNCTION_ACTIVE_COOLER"])
+
+        if heater and cooler:
+            return HVACMode.HEAT_COOL
+        if heater:
+            return HVACMode.HEAT
+        if cooler:
+            return HVACMode.COOL
+
         return HVACMode.FAN_ONLY
-        # if self.device.ventilation_mode == VENTILATION_MODE_STOP:
-        #     return HVACMode.OFF
 
-        # return HVACMode.FAN_ONLY
-
-    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+    async def async_set_hvac_mode(self, _hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         return
-        # try:
-        #     if hvac_mode == HVACMode.OFF:
-        #         await self.device.set_ventilation_mode(VENTILATION_MODE_STOP)
-        #     else:
-        #         await self.device.set_ventilation_mode(VENTILATION_MODE_HOME)
-        # except (asyncio.exceptions.TimeoutError, ConnectionError, DecodingError) as exc:
-        #     raise HomeAssistantError from exc
-        # finally:
-        #     await self.coordinator.async_refresh()
 
     @property
     def fan_mode(self) -> str:
         """Return the current fan mode."""
         mode = self.coordinator.get_modbus_data(parameter_map["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"])
-        return VALUE_TO_FAN_MODE_MAP.get(mode, FAN_LOW)
+        return VALUE_TO_FAN_MODE_MAP.get(int(mode), FAN_LOW)
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan mode."""
