@@ -10,11 +10,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.components.sensor.const import SensorDeviceClass, SensorStateClass
-from homeassistant.const import (
-    PERCENTAGE,
-    REVOLUTIONS_PER_MINUTE,
-    UnitOfTemperature,
-)
+from homeassistant.const import PERCENTAGE, REVOLUTIONS_PER_MINUTE, EntityCategory, UnitOfTemperature, UnitOfTime
 
 from .entity import SystemairEntity
 from .modbus import ModbusParameter, parameter_map
@@ -83,6 +79,22 @@ ENTITY_DESCRIPTIONS = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         registry=parameter_map["REG_OUTPUT_EAF"],
+    ),
+    SystemairSensorEntityDescription(
+        key="heater_output_value",
+        translation_key="heater_output_value",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        registry=parameter_map["REG_PWM_TRIAC_OUTPUT"],
+    ),
+    SystemairSensorEntityDescription(
+        key="filter_remaining_time",
+        translation_key="filter_remaining_time",
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        registry=parameter_map["REG_FILTER_REMAINING_TIME_L"],
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 

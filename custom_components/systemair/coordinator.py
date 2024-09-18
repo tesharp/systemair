@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ast import mod
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -54,15 +55,32 @@ class SystemairDataUpdateCoordinator(DataUpdateCoordinator):
         if modbus_parameter not in self.modbus_parameters:
             self.modbus_parameters.append(modbus_parameter)
 
+        if modbus_parameter.combine_with_32_bit:
+            combine_with = next(
+                (param for param in parameter_map.values() if param.register == modbus_parameter.combine_with_32_bit),
+                None,
+            )
+
+            if combine_with and combine_with not in self.modbus_parameters:
+                self.modbus_parameters.append(combine_with)
+
     def get_modbus_data(self, register: ModbusParameter) -> float:
         """Get the data for a Modbus register."""
         self.register_modbus_parameters(register)
         value = self.data.get(str(register.register - 1))
+
         if value is None:
             return 0
         if register.boolean:
             return value != 0
         value = int(value)
+
+        if register.combine_with_32_bit:
+            high = self.data.get(str(register.combine_with_32_bit - 1))
+            if high is None:
+                return 0
+            value += int(high) << 16
+
         if register.sig == IntegerType.INT and value > (1 << 15):
             value = -(65536 - value)
         return value / (register.scale_factor or 1)

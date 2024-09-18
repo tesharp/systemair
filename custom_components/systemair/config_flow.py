@@ -29,7 +29,7 @@ class SystemairFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         _errors = {}
         if user_input is not None:
             try:
-                mac_address = await self._test_connection(
+                data = await self._test_connection(
                     address=user_input[CONF_IP_ADDRESS],
                 )
             except SystemairApiClientCommunicationError as exception:
@@ -39,11 +39,11 @@ class SystemairFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
             else:
-                await self.async_set_unique_id(mac_address)
+                await self.async_set_unique_id(data["mac_address"])
                 self._abort_if_unique_id_configured()
 
                 return self.async_create_entry(
-                    title=user_input[CONF_IP_ADDRESS],
+                    title=data["model"],
                     data=user_input,
                 )
 
@@ -63,11 +63,17 @@ class SystemairFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=_errors,
         )
 
-    async def _test_connection(self, address: str) -> str:
+    async def _test_connection(self, address: str) -> dict[str, str]:
         """Validate credentials."""
         client = SystemairApiClient(
             address=address,
             session=async_create_clientsession(self.hass),
         )
         menu = await client.async_get_endpoint("menu")
-        return menu["mac"]
+        unit_version = await client.async_get_endpoint("unit_version")
+
+        response = {}
+        response["mac_address"] = menu["mac"]
+        response["model"] = unit_version["MB Model"]
+
+        return response

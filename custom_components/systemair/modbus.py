@@ -49,6 +49,7 @@ class ModbusParameter:
     max_value: int | None = None
     boolean: bool | None = None
     scale_factor: int | None = None
+    combine_with_32_bit: int | None = None
 
 
 parameters_list = [
@@ -470,6 +471,15 @@ parameters_list = [
         boolean=True,
     ),
     ModbusParameter(
+        register=2149,
+        sig=IntegerType.INT,
+        reg_type=RegisterType.Input,
+        short="REG_PWM_TRIAC_OUTPUT",
+        description="TRIAC after manual override",
+        min_value=0,
+        max_value=100,
+    ),
+    ModbusParameter(
         register=14101,
         sig=IntegerType.INT,
         reg_type=RegisterType.Input,
@@ -502,6 +512,7 @@ parameters_list = [
         reg_type=RegisterType.Input,
         short="REG_FILTER_REMAINING_TIME_L",
         description="Remaining filter time in seconds, lower 16 bits",
+        combine_with_32_bit=7006,
     ),
     ModbusParameter(
         register=7006,
@@ -509,6 +520,7 @@ parameters_list = [
         reg_type=RegisterType.Input,
         short="REG_FILTER_REMAINING_TIME_H",
         description="Remaining filter time in seconds, higher 16 bits",
+        combine_with_32_bit=7005,
     ),
     # Analog Input values (Temperatures, CO2, RH)
     ModbusParameter(

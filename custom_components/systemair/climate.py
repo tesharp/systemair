@@ -3,8 +3,6 @@
 import asyncio.exceptions
 from typing import Any
 
-from .const import LOGGER
-
 from homeassistant.components.climate import (
     ClimateEntity,
 )
@@ -24,6 +22,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from httpx import DecodingError
 
 from .const import (
+    LOGGER,
     MAX_TEMP,
     MIN_TEMP,
     PRESET_MODE_AWAY,
@@ -192,7 +191,7 @@ class SystemairClimateEntity(SystemairEntity, ClimateEntity):
 
         return HVACMode.FAN_ONLY
 
-    async def async_set_hvac_mode(self, _hvac_mode: HVACMode) -> None:
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:  # noqa: ARG002
         """Set new target hvac mode."""
         return
 

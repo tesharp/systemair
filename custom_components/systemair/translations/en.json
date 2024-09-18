@@ -78,6 +78,12 @@
             },
             "meter_eaf_reg_speed": {
                 "name": "EAF fan speed"
+            },
+            "heater_output_value": {
+                "name": "Heater output value"
+            },
+            "filter_remaining_time": {
+                "name": "Filter remaining time"
             }
         },
         "switch": {
