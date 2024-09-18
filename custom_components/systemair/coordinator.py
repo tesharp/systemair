@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from ast import mod
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
