@@ -66,8 +66,9 @@ class SystemairApiClient:
         headers: dict | None = None,
     ) -> Any:
         """Get information from the API."""
+        retries = 2
         try:
-            for _attempt in range(2):
+            for attempt in range(retries):
                 async with async_timeout.timeout(10):
                     response = await self._session.request(
                         method=method,
@@ -78,6 +79,12 @@ class SystemairApiClient:
                     response_body = await response.text()
                     if "MB DISCONNECTED" in response_body:
                         LOGGER.warning("Received 'MB DISCONNECTED', retrying...")
+
+                        if attempt == retries - 1:
+                            raise SystemairApiClientCommunicationError(
+                                "MB DISCONNECTED",
+                            )
+
                         continue
                     if "OK" in response_body:
                         return response_body
@@ -91,6 +98,11 @@ class SystemairApiClient:
         except (aiohttp.ClientError, socket.gaierror) as exception:
             msg = f"Error fetching information - {exception}"
             raise SystemairApiClientCommunicationError(
+                msg,
+            ) from exception
+        except SystemairApiClientCommunicationError as exception:
+            msg = f"Received mb disconnect - {exception}"
+            raise SystemairApiClientError(
                 msg,
             ) from exception
         except Exception as exception:  # pylint: disable=broad-except
