@@ -22,7 +22,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from httpx import DecodingError
 
 from .const import (
-    LOGGER,
     MAX_TEMP,
     MIN_TEMP,
     PRESET_MODE_AWAY,
@@ -107,7 +106,6 @@ class SystemairClimateEntity(SystemairEntity, ClimateEntity):
         cooler = self.coordinator.get_modbus_data(parameter_map["REG_FUNCTION_ACTIVE_COOLER"])
 
         self._attr_hvac_modes = [HVACMode.FAN_ONLY]
-        LOGGER.info("Heater: %s, Cooler: %s", heater, cooler)
         if heater:
             self._attr_hvac_modes.append(HVACMode.HEAT)
 

@@ -22,6 +22,15 @@ if TYPE_CHECKING:
     from .coordinator import SystemairDataUpdateCoordinator
     from .data import SystemairConfigEntry
 
+ALARM_STATE_TO_VALUE_MAP = {
+    "Inactive": 0,
+    "Active": 1,
+    "Waiting": 2,
+    "Cleared Error Active": 3,
+}
+
+VALUE_MAP_TO_ALARM_STATE = {value: key for key, value in ALARM_STATE_TO_VALUE_MAP.items()}
+
 
 @dataclass(kw_only=True, frozen=True)
 class SystemairSensorEntityDescription(SensorEntityDescription):
@@ -145,16 +154,10 @@ class SystemairSensor(SystemairEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the native value of the sensor."""
-        value = str(self.coordinator.get_modbus_data(self.entity_description.registry))
+        value = self.coordinator.get_modbus_data(self.entity_description.registry)
 
         if self.device_class == SensorDeviceClass.ENUM:
-            if value == "0":
-                return "Inactive"
-            if value == "1":
-                return "Active"
-            if value == "2":
-                return "Waiting"
+            value = int(value)
+            return VALUE_MAP_TO_ALARM_STATE.get(value, "Inactive")
 
-            return "Cleared Error Active"
-
-        return value
+        return str(value)

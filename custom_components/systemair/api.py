@@ -59,6 +59,24 @@ class SystemairApiClient:
         LOGGER.debug("URL: %s", url)
         return await self._api_wrapper(method="get", url=url)
 
+    async def _parse_response(self, response: aiohttp.ClientResponse, *, retry: bool) -> Any:
+        """Parse the response."""
+        response_body = await response.text()
+        if "MB DISCONNECTED" in response_body:
+            LOGGER.debug("Received 'MB DISCONNECTED', retrying...")
+
+            if not retry:
+                msg = "MB DISCONNECTED"
+                raise SystemairApiClientCommunicationError(
+                    msg,
+                )
+
+            await asyncio.sleep(1)
+            return None
+        if "OK" in response_body:
+            return response_body
+        return await response.json()
+
     async def _api_wrapper(
         self,
         method: str,
@@ -77,20 +95,10 @@ class SystemairApiClient:
                         headers=headers,
                         json=data,
                     )
-                    response_body = await response.text()
-                    if "MB DISCONNECTED" in response_body:
-                        LOGGER.debug("Received 'MB DISCONNECTED', retrying...")
-
-                        if attempt == retries - 1:
-                            raise SystemairApiClientCommunicationError(
-                                "MB DISCONNECTED",
-                            )
-
-                        await asyncio.sleep(1)
+                    response = await self._parse_response(response, retry=attempt < retries - 1)
+                    if response is None:
                         continue
-                    if "OK" in response_body:
-                        return response_body
-                    return await response.json()
+                    return response
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"
