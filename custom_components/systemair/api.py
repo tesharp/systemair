@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio.exceptions
 import socket
 from typing import TYPE_CHECKING, Any
 
@@ -66,7 +67,7 @@ class SystemairApiClient:
         headers: dict | None = None,
     ) -> Any:
         """Get information from the API."""
-        retries = 2
+        retries = 3
         try:
             for attempt in range(retries):
                 async with async_timeout.timeout(10):
@@ -78,13 +79,14 @@ class SystemairApiClient:
                     )
                     response_body = await response.text()
                     if "MB DISCONNECTED" in response_body:
-                        LOGGER.warning("Received 'MB DISCONNECTED', retrying...")
+                        LOGGER.debug("Received 'MB DISCONNECTED', retrying...")
 
                         if attempt == retries - 1:
                             raise SystemairApiClientCommunicationError(
                                 "MB DISCONNECTED",
                             )
 
+                        await asyncio.sleep(1)
                         continue
                     if "OK" in response_body:
                         return response_body
