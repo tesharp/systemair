@@ -13,7 +13,7 @@ from homeassistant.components.sensor.const import SensorDeviceClass, SensorState
 from homeassistant.const import PERCENTAGE, REVOLUTIONS_PER_MINUTE, EntityCategory, UnitOfTemperature, UnitOfTime
 
 from .entity import SystemairEntity
-from .modbus import ModbusParameter, parameter_map
+from .modbus import ModbusParameter, alarm_parameters, parameter_map
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -96,6 +96,17 @@ ENTITY_DESCRIPTIONS = (
         registry=parameter_map["REG_FILTER_REMAINING_TIME_L"],
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    *(
+        SystemairSensorEntityDescription(
+            key=f"alarm_{param.short.lower()}",
+            name=param.description,
+            device_class=SensorDeviceClass.ENUM,
+            options=["Inactive", "Active", "Waiting", "Cleared Error Active"],
+            registry=param,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        )
+        for param in alarm_parameters.values()
+    ),
 )
 
 
@@ -134,4 +145,16 @@ class SystemairSensor(SystemairEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the native value of the sensor."""
-        return str(self.coordinator.get_modbus_data(self.entity_description.registry))
+        value = str(self.coordinator.get_modbus_data(self.entity_description.registry))
+
+        if self.device_class == SensorDeviceClass.ENUM:
+            if value == "0":
+                return "Inactive"
+            if value == "1":
+                return "Active"
+            if value == "2":
+                return "Waiting"
+
+            return "Cleared Error Active"
+
+        return value
