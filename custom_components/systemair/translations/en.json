@@ -64,20 +64,26 @@
             "extract_air_temperature": {
                 "name": "Extract air temperature"
             },
+            "supply_air_temperature": {
+                "name": "Supply air temperature"
+            },
             "overheat_temperature": {
                 "name": "Overheat Temperature sensor"
             },
+            "extract_air_relative_humidity": {
+                "name": "Extract air relative humidity"
+            },  
             "meter_saf_rpm": {
-                "name": "Supply Air Fan RPM"
+                "name": "Supply air fan RPM"
             },
             "meter_saf_reg_speed": {
-                "name": "SAF fan speed"
+                "name": "Supply air fan speed"
             },
             "meter_eaf_rpm": {
-                "name": "Extract Air Fan RPM"
+                "name": "Extract air fan RPM"
             },
             "meter_eaf_reg_speed": {
-                "name": "EAF fan speed"
+                "name": "Extract air fan speed"
             },
             "heater_output_value": {
                 "name": "Heater output value"
